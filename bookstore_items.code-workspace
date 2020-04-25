@@ -1,0 +1,11 @@
+{
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "settings": {
+    "go.buildOnSave": "workspace",
+    "go.inferGopath": false
+  }
+}
