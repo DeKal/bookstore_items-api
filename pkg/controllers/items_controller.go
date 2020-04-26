@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/DeKal/bookstore_items-api/pkg/domain/items/dto"
 	"github.com/DeKal/bookstore_items-api/pkg/services"
 	"github.com/DeKal/bookstore_items-api/pkg/utils/httputils"
 	"github.com/DeKal/bookstore_oauth-go/oauth"
 	"github.com/DeKal/bookstore_utils-go/errors"
+	"github.com/gorilla/mux"
 )
 
 // ItemsControllerInterface is an interface for itemService
@@ -66,7 +68,20 @@ func (c *itemsController) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *itemsController) Get(w http.ResponseWriter, r *http.Request) {
-	if err := oauth.AuthenticateRequest(r); err != nil {
+	vars := mux.Vars(r)
+	itemID := strings.TrimSpace(vars["id"])
+
+	if len(itemID) == 0 {
+		httputils.WriteReponseError(w,
+			errors.NewBadRequestError("No item ID from request."))
 		return
 	}
+
+	item, err := c.services.Get(itemID)
+	if err != nil {
+		httputils.WriteReponseError(w, err)
+		return
+	}
+
+	httputils.WriteJSONResponse(w, http.StatusOK, item)
 }

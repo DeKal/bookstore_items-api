@@ -9,4 +9,5 @@ import (
 
 func mapUrls(router *mux.Router, controller controllers.ItemsControllerInterface) {
 	router.HandleFunc("/items", controller.Create).Methods(http.MethodPost)
+	router.HandleFunc("/items/{id}", controller.Get).Methods(http.MethodGet)
 }

@@ -1,8 +1,6 @@
 package services
 
 import (
-	"net/http"
-
 	"github.com/DeKal/bookstore_items-api/pkg/domain/items/dao"
 	"github.com/DeKal/bookstore_items-api/pkg/domain/items/dto"
 	"github.com/DeKal/bookstore_utils-go/errors"
@@ -29,10 +27,6 @@ func (s *itemsService) Create(item *dto.Item) (*dto.Item, *errors.RestError) {
 	return s.itemDAO.Save(item)
 }
 
-func (s *itemsService) Get(string) (*dto.Item, *errors.RestError) {
-	return nil, &errors.RestError{
-		Status:  http.StatusNotImplemented,
-		Message: "Implement me",
-		Error:   "not_implement",
-	}
+func (s *itemsService) Get(id string) (*dto.Item, *errors.RestError) {
+	return s.itemDAO.Get(id)
 }
