@@ -2,11 +2,10 @@ package controllers
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 
-	"github.com/DeKal/bookstore_items-api/pkg/domain/items"
+	"github.com/DeKal/bookstore_items-api/pkg/domain/items/dto"
 	"github.com/DeKal/bookstore_items-api/pkg/services"
 	"github.com/DeKal/bookstore_items-api/pkg/utils/httputils"
 	"github.com/DeKal/bookstore_oauth-go/oauth"
@@ -24,8 +23,10 @@ type itemsController struct {
 }
 
 // NewItemsController return new itemService
-func NewItemsController() ItemsControllerInterface {
-	return &itemsController{}
+func NewItemsController(services services.ItemsServiceInterface) ItemsControllerInterface {
+	return &itemsController{
+		services: services,
+	}
 }
 
 func (c *itemsController) Create(w http.ResponseWriter, r *http.Request) {
@@ -33,8 +34,14 @@ func (c *itemsController) Create(w http.ResponseWriter, r *http.Request) {
 		httputils.WriteReponseError(w, err)
 		return
 	}
+	sellerID := oauth.GetCallerID(r)
+	if sellerID == 0 {
+		httputils.WriteReponseError(w,
+			errors.NewUnauthorizedError("Unauthorized with given access_token"))
+		return
+	}
 
-	item := &items.Item{}
+	item := &dto.Item{}
 	requestBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		httputils.WriteReponseError(w,
@@ -47,7 +54,7 @@ func (c *itemsController) Create(w http.ResponseWriter, r *http.Request) {
 			errors.NewBadRequestError("Cannot parse request body to json."))
 		return
 	}
-	item.Seller = oauth.GetCallerID(r)
+	item.Seller = sellerID
 
 	result, svcErr := c.services.Create(item)
 	if svcErr != nil {
@@ -56,7 +63,6 @@ func (c *itemsController) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httputils.WriteJSONResponse(w, http.StatusCreated, result)
-	fmt.Println(result)
 }
 
 func (c *itemsController) Get(w http.ResponseWriter, r *http.Request) {

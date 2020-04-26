@@ -4,14 +4,21 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/DeKal/bookstore_items-api/pkg/clients/elasticsearch"
 	"github.com/DeKal/bookstore_items-api/pkg/controllers"
+	"github.com/DeKal/bookstore_items-api/pkg/domain/items/dao"
+	"github.com/DeKal/bookstore_items-api/pkg/services"
 	"github.com/gorilla/mux"
 )
 
 // StartApplication start application with server and router
 func StartApplication() {
+	esClient := elasticsearch.NewEsClient()
+	itemsDAO := dao.NewItemsDao(esClient)
+	itemsService := services.NewItemsService(itemsDAO)
+
 	router := mux.NewRouter()
-	itemsController := controllers.NewItemsController()
+	itemsController := controllers.NewItemsController(itemsService)
 	mapUrls(router, itemsController)
 
 	// Testing api with ping controller

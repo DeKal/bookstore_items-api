@@ -1,4 +1,4 @@
-package items
+package dto
 
 // Item is a book representation
 type Item struct {
