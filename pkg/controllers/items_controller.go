@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/DeKal/bookstore_items-api/pkg/domain/items/dto"
+	"github.com/DeKal/bookstore_items-api/pkg/domain/queries"
 	"github.com/DeKal/bookstore_items-api/pkg/services"
 	"github.com/DeKal/bookstore_items-api/pkg/utils/httputils"
 	"github.com/DeKal/bookstore_oauth-go/oauth"
@@ -18,6 +19,7 @@ import (
 type ItemsControllerInterface interface {
 	Create(http.ResponseWriter, *http.Request)
 	Get(http.ResponseWriter, *http.Request)
+	Search(http.ResponseWriter, *http.Request)
 }
 
 type itemsController struct {
@@ -84,4 +86,29 @@ func (c *itemsController) Get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httputils.WriteJSONResponse(w, http.StatusOK, item)
+}
+
+func (c *itemsController) Search(w http.ResponseWriter, r *http.Request) {
+	bytes, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		httputils.WriteReponseError(w,
+			errors.NewBadRequestError("Cannot parse search query."))
+		return
+	}
+	defer r.Body.Close()
+
+	query := &queries.EsQuery{}
+	if err := json.Unmarshal(bytes, query); err != nil {
+		httputils.WriteReponseError(w,
+			errors.NewBadRequestError("Cannot parse search query."))
+		return
+	}
+
+	items, searchErr := c.services.Seach(query)
+	if searchErr != nil {
+		httputils.WriteReponseError(w, searchErr)
+		return
+	}
+
+	httputils.WriteJSONResponse(w, http.StatusOK, items)
 }

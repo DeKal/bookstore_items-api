@@ -3,6 +3,7 @@ package services
 import (
 	"github.com/DeKal/bookstore_items-api/pkg/domain/items/dao"
 	"github.com/DeKal/bookstore_items-api/pkg/domain/items/dto"
+	"github.com/DeKal/bookstore_items-api/pkg/domain/queries"
 	"github.com/DeKal/bookstore_utils-go/errors"
 )
 
@@ -10,6 +11,7 @@ import (
 type ItemsServiceInterface interface {
 	Create(*dto.Item) (*dto.Item, *errors.RestError)
 	Get(string) (*dto.Item, *errors.RestError)
+	Seach(query *queries.EsQuery) ([]dto.Item, *errors.RestError)
 }
 
 type itemsService struct {
@@ -29,4 +31,8 @@ func (s *itemsService) Create(item *dto.Item) (*dto.Item, *errors.RestError) {
 
 func (s *itemsService) Get(id string) (*dto.Item, *errors.RestError) {
 	return s.itemDAO.Get(id)
+}
+
+func (s *itemsService) Seach(query *queries.EsQuery) ([]dto.Item, *errors.RestError) {
+	return s.itemDAO.Search(query)
 }

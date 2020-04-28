@@ -7,6 +7,7 @@ import (
 
 	"github.com/DeKal/bookstore_items-api/pkg/clients/elasticsearch"
 	"github.com/DeKal/bookstore_items-api/pkg/domain/items/dto"
+	"github.com/DeKal/bookstore_items-api/pkg/domain/queries"
 	"github.com/DeKal/bookstore_utils-go/errors"
 )
 
@@ -23,6 +24,7 @@ type itemsDAO struct {
 type ItemsDAOInterface interface {
 	Save(*dto.Item) (*dto.Item, *errors.RestError)
 	Get(string) (*dto.Item, *errors.RestError)
+	Search(*queries.EsQuery) ([]dto.Item, *errors.RestError)
 }
 
 // NewItemsDao return new NewItemsDao interface
@@ -60,4 +62,25 @@ func (dao *itemsDAO) Get(id string) (*dto.Item, *errors.RestError) {
 		return nil, errors.NewInternalServerError("Error when trying to parse db response.")
 	}
 	return item, nil
+}
+
+func (dao *itemsDAO) Search(query *queries.EsQuery) ([]dto.Item, *errors.RestError) {
+	results, err := dao.esClient.Search(index, query.Build())
+	if err != nil {
+		return nil, errors.NewInternalServerError("Error when trying to search for documents")
+	}
+	if results.TotalHits() == 0 {
+		return nil, errors.NewNotFoundError("No items found matching current criteria.")
+	}
+
+	items := []dto.Item{}
+	for _, hit := range results.Hits.Hits {
+		bytes, _ := hit.Source.MarshalJSON()
+		item := dto.Item{}
+		if err := json.Unmarshal(bytes, &item); err != nil {
+			return nil, errors.NewInternalServerError("Error when trying to parse response.")
+		}
+		items = append(items, item)
+	}
+	return items, nil
 }

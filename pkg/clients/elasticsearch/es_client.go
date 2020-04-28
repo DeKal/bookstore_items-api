@@ -19,6 +19,7 @@ type Client struct {
 type ClientInterface interface {
 	IndexWith(string, string, interface{}) (*elastic.IndexResponse, error)
 	Get(string, string, string) (*elastic.GetResult, error)
+	Search(string, elastic.Query) (*elastic.SearchResult, error)
 }
 
 // NewEsClient return new elasticsearch client
@@ -59,6 +60,19 @@ func (c *Client) Get(index string, docType string, id string) (*elastic.GetResul
 	if err != nil {
 		logger.Error(
 			fmt.Sprintf("Error when trying to get document in index %s with type %s", index, docType), err)
+		return nil, err
+	}
+	return result, nil
+}
+
+// Search search for document from query
+func (c *Client) Search(index string, query elastic.Query) (*elastic.SearchResult, error) {
+	ctx := context.Background()
+
+	result, err := c.client.Search(index).Query(query).RestTotalHitsAsInt(true).Do(ctx)
+	if err != nil {
+		logger.Error(
+			fmt.Sprintf("Error when trying to search document in index %s", index), err)
 		return nil, err
 	}
 	return result, nil
